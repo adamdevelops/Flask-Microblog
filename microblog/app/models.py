@@ -1,4 +1,4 @@
-    from app import db
+from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from flask_login import UserMixin
@@ -53,10 +53,11 @@ class User(UserMixin, db.Model):
             followers.c.followed_id == user.id).count() > 0
 
     def followed_posts(self):
-    return Post.query.join(
-        followers, (followers.c.followed_id == Post.user_id)).filter(
-            followers.c.follower_id == self.id).order_by(
-                Post.timestamp.desc())
+        followed = Post.query.join(
+            followers, (followers.c.followed_id == Post.user_id)).filter(
+                followers.c.follower_id == self.id)
+        own = Post.query.filter_by(user_id=self.id)
+        return followed.union(own).order_by(Post.timestamp.desc())
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
